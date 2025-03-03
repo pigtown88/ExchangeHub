@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>處理完成</title>
+<script src="resources/js/jquery-3.6.0.min.js"></script>
+
+<link rel="stylesheet" href="resources/css/step5.css">
+<style>
+</style>
+<!-- 導航欄相關引入 -->
+<link rel="stylesheet" href="resources/css/navbar.css">
+<script src="resources/js/navbar-loader.js"></script>
+<!-- 請求攔截器 -->
+<script src="resources/js/api-interceptor.js"></script>
+</head>
+<body> 
+    <div class="container"> 
+        <div class="result-card"> 
+            <div class="success-icon">✓</div> 
+            <h1 class="success-title">處理完成</h1> 
+            <p class="success-message">您的資料已成功處理完成</p> 
+            
+            <!-- 新增下載按鈕 -->
+            <div class="action-buttons">
+                <button onclick="backToHome()" class="btn">返回首頁</button>
+                <button onclick="downloadHistoryList()" class="btn btn-download">下載歷史清單</button>
+            </div>
+        </div> 
+    </div> 
+    <script> 
+        // 返回首頁的函數 
+        function backToHome() { 
+            window.location.href = 'step1.html'; 
+        } 
+
+        // 下載歷史清單函數
+        function downloadHistoryList() {
+            $.ajax({
+                url: '/ExchangeHub/api3/download/csv',
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(response, status, xhr) {
+                    const filename = xhr.getResponseHeader('Content-Disposition')
+                        .split('filename=')[1] || 'history.csv';
+
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(new Blob([response]));
+                    link.download = filename;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                error: function(xhr, status, error) {
+                    console.error('下載失敗:', error);
+                    alert('下載歷史清單時發生錯誤');
+                }
+            });
+        }
+    </script> 
+    <div id="navbar-container"></div> 
+    <script> 
+        $('#navbar-container').load('./nvbar.html'); 
+    </script>
+</body></html>

@@ -1,0 +1,49 @@
+     /* 原有的樣式保持不變 */
+     .container {
+        width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .upload-form {
+        margin: 20px 0;
+        padding: 20px;
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        text-align: center;
+    }
+
+    .error-message {
+        color: red;
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid red;
+        border-radius: 5px;
+        display: none;
+    }
+
+    .success-message {
+        color: green;
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid green;
+        border-radius: 5px;
+        display: none;
+    }
+
+    .validation-summary {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+

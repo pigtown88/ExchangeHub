@@ -1,0 +1,155 @@
+.container {
+	width: 90%;
+	max-width: 1200px;
+	margin: 20px auto;
+	padding: 20px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+}
+
+.header {
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.info-box {
+	background-color: #f8f9fa;
+	padding: 15px;
+	margin-bottom: 20px;
+	border-radius: 5px;
+	border: 1px solid #ddd;
+}
+
+.info-row {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10px;
+}
+
+.info-label {
+	font-weight: bold;
+	color: #666;
+}
+
+.data-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 20px 0;
+}
+
+.data-table th, .data-table td {
+	padding: 8px;
+	text-align: left;
+	border: 1px solid #ddd;
+}
+
+.data-table th {
+	background-color: #f5f5f5;
+	font-weight: bold;
+}
+
+.data-table tr:nth-child(even) {
+	background-color: #fafafa;
+}
+
+.button-group {
+	margin-top: 20px;
+	text-align: right;
+}
+
+.btn {
+	padding: 8px 16px;
+	margin-left: 10px;
+	border-radius: 4px;
+	cursor: pointer;
+	border: none;
+}
+
+.btn-back {
+	background-color: #6c757d;
+	color: white;
+}
+
+.btn-confirm {
+	background-color: #4a90e2;
+	color: white;
+}
+
+.btn:hover {
+	opacity: 0.9;
+}
+
+.notice {
+	padding: 15px;
+	margin: 20px 0;
+	background-color: #fff3cd;
+	border: 1px solid #ffeeba;
+	border-radius: 4px;
+	color: #856404;
+}
+.summary-content {
+    padding: 15px;
+}
+
+.warning-text {
+    color: #856404;
+    font-weight: bold;
+}
+
+.notice {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.invalid-transactions table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+
+.invalid-transactions th,
+.invalid-transactions td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ffeeba;
+}
+
+.invalid-transactions th {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.invalid-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.invalid-cell {
+    padding: 8px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.error-list {
+    margin: 0;
+    padding: 0;
+}
+
+.error-item {
+    padding: 4px 0;
+    color: #dc3545;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.error-item:last-child {
+    border-bottom: none;
+}

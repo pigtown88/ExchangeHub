@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>資料比對結果</title>
+
+<script src="resources/js/jquery-3.6.0.min.js"></script>
+
+<link rel="stylesheet" href="resources/css/step3.css">
+<!-- 導航欄相關引入 -->
+<link rel="stylesheet" href="resources/css/navbar.css">
+<script src="resources/js/navbar-loader.js"></script>
+<!-- 請求攔截器 -->
+<script src="resources/js/api-interceptor.js"></script>
+</head>
+
+<body>
+	<div class="container">
+		<!-- 主要內容卡片 -->
+		<div class="card">
+			<!-- 卡片頭部：顯示標題 -->
+			<div class="card-header">
+				<h2>步驟三：資料比對結果</h2>
+			</div>
+
+			<!-- 卡片內容區域 -->
+			<div class="card-content">
+				<!-- 統計數據區塊：顯示重複和非重複交易數量 -->
+				<div class="stats-container">
+					<div class="stat-box duplicate">
+						<h3>重複交易</h3>
+						<p class="count" id="duplicateCount">0 筆</p>
+					</div>
+					<div class="stat-box non-duplicate">
+						<h3>不重複交易</h3>
+						<p class="count" id="nonDuplicateCount">0 筆</p>
+					</div>
+					<!-- 新增：警告訊息區塊 -->
+					<div id="warningMessage" class="alert-warning">
+						本次比對無重複交易，無需進行後續處理！</div>
+				</div>
+
+				<!-- 提示訊息區塊 -->
+				<div class="alert">
+					<h4>檢查完成</h4>
+					<p>系統已完成資料比對，您可以查看詳細的比對結果。</p>
+					<p id="duplicateNotice" style="display: none;">發現重複交易，請仔細檢查重複項目。</p>
+				</div>
+
+				<!-- 分頁區塊：用於切換顯示重複和非重複交易 -->
+				<div class="tabs">
+					<!-- 分頁按鈕 -->
+					<div class="tab-buttons">
+						<button id="duplicatesButton" class="tab-button"
+							onclick="switchTab('duplicates')">
+							重複交易 <span class="badge" id="duplicateBadge">0</span>
+						</button>
+						<button id="nonDuplicatesButton" class="tab-button"
+							onclick="switchTab('nonDuplicates')">不重複交易</button>
+					</div>
+
+					<!-- 重複交易內容區域 -->
+					<div id="duplicatesContent" class="tab-content">
+						<!-- 下載按鈕區域 -->
+						<div style="margin-bottom: 15px">
+							<button onclick="downloadDuplicates()" class="btn btn-download">
+								下載重複交易清單</button>
+						</div>
+						<!-- 重複交易表格 -->
+						<table class="data-table">
+							<!-- 表格標題行 -->
+							<thead>
+								<tr>
+									<th>交易序號</th>
+									<th>姓名</th>
+									<th>身分證字號</th>
+									<th>金額</th>
+									<th>交易時間</th>
+									<th>幣別</th>
+
+								</tr>
+							</thead>
+							<!-- 表格內容區域 -->
+							<tbody id="duplicatesTable"></tbody>
+						</table>
+					</div>
+
+					<!-- 不重複交易內容區域 -->
+					<div id="nonDuplicatesContent" class="tab-content">
+						<table class="data-table">
+							<thead>
+								<tr>
+									<th>交易序號</th>
+									<th>姓名</th>
+									<th>身分證字號</th>
+									<th>金額</th>
+									<th>交易時間</th>
+									<th>幣別</th>
+								</tr>
+							</thead>
+							<tbody id="nonDuplicatesTable"></tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- 按鈕區域 -->
+				<div class="button-group">
+					<button onclick="goBack()" class="btn btn-back">返回</button>
+					<button onclick="goToNextStep()" class="btn btn-next"
+						id="nextButton">下一步</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 從瀏覽器的本地儲存空間取得比對結果
+            const checkResult = JSON.parse(localStorage.getItem('checkResult'));
+            console.log('載入比對結果：', checkResult);
+
+            // 檢查是否成功取得資料
+            if (!checkResult) {
+                console.error('無法獲取比對結果');
+                alert('無法獲取比對結果，請重新執行比對');
+                return;
+            }
+
+            // 更新頁面上的資訊
+            updateUI(checkResult);
+            // 預設顯示重複交易的分頁
+            switchTab('duplicates');
+        });
+
+        /**
+         * 更新使用者介面
+         * @param {Object} data - 包含重複和非重複交易資料的物件
+         */
+        function updateUI(data) {
+            try {
+                // 更新統計數據
+                document.getElementById('duplicateCount').textContent =
+                    `${data.duplicates.length || 0} 筆`;
+                document.getElementById('nonDuplicateCount').textContent =
+                    `${data.nonDuplicates.length || 0} 筆`;
+                document.getElementById('duplicateBadge').textContent =
+                    data.duplicates.length || 0;
+
+                // 取得警告訊息元素和下一步按鈕
+                const warningMessage = document.getElementById('warningMessage');
+                const nextButton = document.querySelector('.btn-next');
+
+                // 檢查是否有重複交易
+                if (data.nonDuplicates.length === 0) {
+                    // 如果沒有重複交易，顯示警告訊息並禁用下一步按鈕
+                    warningMessage.style.display = 'block';
+                    nextButton.classList.add('btn-disabled');
+                    nextButton.disabled = true;
+                } else {
+                    // 如果有重複交易，隱藏警告訊息並啟用下一步按鈕
+                    warningMessage.style.display = 'none';
+                    nextButton.classList.remove('btn-disabled');
+                    nextButton.disabled = false;
+                    
+                }
+
+                // 填充表格資料
+                populateTables(data);
+            } catch (error) {
+                console.error('更新UI時發生錯誤:', error);
+                alert('更新頁面時發生錯誤，請重新整理頁面');
+            }
+        }
+
+        /**
+         * 填充重複和非重複交易的表格
+         * @param {Object} data - 包含交易資料的物件
+         */
+        function populateTables(data) {
+            // 填充重複交易表格
+            const duplicatesTable = document.getElementById('duplicatesTable');
+            duplicatesTable.innerHTML = ''; // 清空表格內容
+
+            // 逐筆新增重複交易資料
+            data.duplicates.forEach(item => {
+                const row = document.createElement('tr');
+                // 設置每一行的HTML內容
+                row.innerHTML = `
+                <td>${item.transactionInfo.transactionNumber}</td>
+                <td>${item.personalInfo.name}</td>
+                <td>${item.personalInfo.idNumber}</td>
+                <td>${formatNumber(item.transactionInfo.exchangeAmount)}</td>
+                <td>${item.transactionInfo.transactionTime}</td>
+                <td>${item.personalInfo.currency}</td>
+                <td>${item.historyTransactionNumber || '-'}</td>
+                <td>${item.historyTransactionTime || '-'}</td>
+            `;
+                duplicatesTable.appendChild(row);
+            });
+
+            // 填充非重複交易表格
+            const nonDuplicatesTable = document.getElementById('nonDuplicatesTable');
+            nonDuplicatesTable.innerHTML = ''; // 清空表格內容
+
+            // 檢查是否有非重複交易資料
+            if (data.nonDuplicates && data.nonDuplicates.length > 0) {
+                // 逐筆新增非重複交易資料
+                data.nonDuplicates.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                    <td>${item.transactionInfo.transactionNumber}</td>
+                    <td>${item.personalInfo.name}</td>
+                    <td>${item.personalInfo.idNumber}</td>
+                    <td>${formatNumber(item.transactionInfo.exchangeAmount)}</td>
+                    <td>${item.transactionInfo.transactionTime}</td>
+                    <td>${item.personalInfo.currency}</td>
+                `;
+                    nonDuplicatesTable.appendChild(row);
+                });
+            } else {
+                // 如果沒有非重複交易，顯示提示訊息
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td colspan="6" style="text-align: center;">沒有不重複的交易</td>
+            `;
+                nonDuplicatesTable.appendChild(row);
+            }
+        }
+
+        /**
+         * 切換分頁顯示
+         * @param {string} tabName - 分頁名稱（'duplicates' 或 'nonDuplicates'）
+         */
+        function switchTab(tabName) {
+            // 隱藏所有分頁內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            // 移除所有分頁按鈕的活動狀態
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // 顯示選中的分頁內容並激活對應按鈕
+            document.getElementById(tabName + 'Content').style.display = 'block';
+            document.getElementById(tabName + 'Button').classList.add('active');
+        }
+
+        /**
+         * 格式化數字為台灣貨幣格式
+         * @param {number} number - 要格式化的數字
+         * @returns {string} 格式化後的字符串
+         */
+        function formatNumber(number) {
+            if (number === undefined || number === null) return '-';
+            return new Intl.NumberFormat('zh-TW', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 5
+            }).format(number);
+        }
+
+        /**
+         * 下載重複交易清單或無重複交易通知
+         */
+        function downloadDuplicates() {
+            // 從 localStorage 獲取資料
+            const checkResult = JSON.parse(localStorage.getItem('checkResult'));
+            console.log('準備下載資料:', checkResult);
+
+            let csvContent = '結匯清單,' + formatDate(new Date()) + '\n';
+
+            // 如果有重複交易，生成完整的交易清單
+            if (checkResult && checkResult.duplicates && checkResult.duplicates.length > 0) {
+                // 添加 CSV 標題行
+                csvContent += '姓名,ID/居留證,生日,國籍,居留證核發日期,居留證有效期限,電話,幣別,' +
+                    '結匯金額(外幣),匯款性質分類編號,交易商品名稱或服務類別,交易更新時間,交易序號\n';
+
+                // 添加每筆重複交易資料
+                checkResult.duplicates.forEach(transaction => {
+                    const row = [
+                        escapeCsvField(transaction.personalInfo.name),
+                        escapeCsvField(transaction.personalInfo.idNumber),
+                        escapeCsvField(transaction.personalInfo.birthDate),
+                        escapeCsvField(transaction.personalInfo.nationality),
+                        escapeCsvField(transaction.personalInfo.residencePermitIssueDate),
+                        escapeCsvField(transaction.personalInfo.residencePermitExpiryDate),
+                        escapeCsvField(transaction.personalInfo.phoneNumber),
+                        escapeCsvField(transaction.personalInfo.currency),
+                        escapeCsvField(transaction.transactionInfo.exchangeAmount),
+                        escapeCsvField(transaction.transactionInfo.remittanceCode),
+                        escapeCsvField(transaction.transactionInfo.transactionDescription),
+                        escapeCsvField(transaction.transactionInfo.transactionTime),
+                        escapeCsvField(transaction.transactionInfo.transactionNumber)
+                    ].join(',');
+                    csvContent += row + '\n';
+                });
+            } else {
+                // 如果沒有重複交易，只添加無重複交易的訊息
+                csvContent += '姓名,ID/居留證,生日,國籍,居留證核發日期,居留證有效期限,電話,幣別,' +
+                    '結匯金額(外幣),匯款性質分類編號,交易商品名稱或服務類別,交易更新時間,交易序號\n';
+                csvContent += '本日無重複結匯交易\n';
+            }
+
+            // 建立 Blob 物件並下載
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `重複交易清單_${formatDate(new Date())}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /**
+         * 格式化日期為 YYYYMMDD 格式
+         * @param {Date} date - 日期物件
+         * @returns {string} 格式化後的日期字串
+         */
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        /**
+         * 處理 CSV 欄位，確保特殊字元正確顯示
+         * @param {any} field - 欄位值
+         * @returns {string} 處理後的欄位值
+         */
+        function escapeCsvField(field) {
+            if (field === null || field === undefined) return '';
+
+            let fieldStr = String(field);
+            // 如果欄位包含逗號、換行或雙引號，需要用雙引號包覆
+            if (fieldStr.includes(',') || fieldStr.includes('\n') || fieldStr.includes('"')) {
+                // 將欄位中的雙引號替換為兩個雙引號
+                fieldStr = fieldStr.replace(/"/g, '""');
+                // 用雙引號包覆整個欄位
+                fieldStr = `"${fieldStr}"`;
+            }
+            return fieldStr;
+        }
+
+        /**
+         * 返回上一步（步驟二）
+         */
+        function goBack() {
+            window.location.href = 'step2.5.html';
+        }
+
+        /**
+         * 前往下一步（步驟四）
+         */
+        function goToNextStep() {
+            try {
+                const checkResult = JSON.parse(localStorage.getItem('checkResult'));
+
+                // 確保資料有效
+                if (!checkResult || !checkResult.duplicates || !checkResult.nonDuplicates) {
+                    alert('資料格式不正確，請重新執行比對');
+                    return;
+                }
+
+                // 檢查是否有重複交易
+                if (checkResult.nonDuplicates.length === 0) {
+                    alert('本次比對無不重複交易，無需進行後續處理！');
+                    return;
+                }
+
+                // 儲存資料並前往下一步
+                localStorage.setItem('processData', JSON.stringify({
+                    duplicates: checkResult.duplicates,
+                    nonDuplicates: checkResult.nonDuplicates
+                }));
+
+                window.location.href = 'step4.html';
+            } catch (error) {
+                console.error('處理資料時發生錯誤:', error);
+                alert('處理資料時發生錯誤，請重試');
+            }
+        }
+    </script>
+	<div id="navbar-container"></div>
+	<script>
+        $('#navbar-container').load('./nvbar.html');
+    </script>
+</body>
+
+</html>

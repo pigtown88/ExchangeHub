@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>每日資料檢查</title>
+<script src="resources/js/jquery-3.6.0.min.js"></script>
+
+<!-- 請求攔截器 -->
+<script src="resources/js/api-interceptor.js"></script>
+
+<!-- 導航欄相關引入 -->
+<link rel="stylesheet" href="resources/css/navbar.css">
+<script src="resources/js/navbar-loader.js"></script>
+
+<style>
+    /* 主要容器樣式 */
+    .container {
+        width: 90%;
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 標題區域樣式 */
+    .header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    /* 資訊區塊樣式 */
+    .info-box {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+
+    /* 警告區塊樣式 */
+    .warning-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+    }
+
+    /* 成功訊息區塊樣式 */
+    .success-box {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+    }
+
+    /* 按鈕組樣式 */
+    .button-group {
+        text-align: right;
+        margin-top: 20px;
+    }
+
+    /* 按鈕基本樣式 */
+    .btn {
+        padding: 8px 16px;
+        margin-left: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    /* 返回按鈕 */
+    .btn-back {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background-color: #5a6268;
+    }
+
+    /* 確認按鈕 */
+    .btn-confirm {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-confirm:hover {
+        background-color: #0069d9;
+    }
+
+    /* 危險按鈕 */
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    /* 載入中動畫 */
+    .loading-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 對話框樣式 */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+
+    .modal-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 500px;
+        max-width: 90%;
+        background-color: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1001;
+    }
+
+    .modal-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .modal-body {
+        margin-bottom: 20px;
+    }
+
+    .modal-footer {
+        text-align: right;
+    }
+
+    /* 資訊列樣式 */
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding: 5px 0;
+    }
+
+    .info-label {
+        font-weight: bold;
+        color: #495057;
+    }
+
+    /* 注意事項樣式 */
+    .notice {
+        padding: 15px;
+        margin: 20px 0;
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+        border-radius: 0 4px 4px 0;
+    }
+
+    .notice ul {
+        margin: 10px 0 0 20px;
+        padding-left: 0;
+    }
+
+    .notice li {
+        margin-bottom: 5px;
+    }
+</style>
+</head>
+
+<body>
+    <!-- 導航欄相關 -->
+    <div id="navbar-container"></div>
+
+    <div class="container">
+        <div class="header">
+       <h2>步驟 2.5：每日資料檢查</h2>
+        </div>
+
+        <div id="messageArea"></div>
+
+        <div id="contentArea" style="display: none;">
+            <!-- 內容將由JavaScript動態填充 -->
+        </div>
+
+        <!-- 操作按鈕區塊 -->
+        <div class="button-group" id="buttonGroup">
+            <button type="button" class="btn btn-back" id="backBtn">返回</button>
+            <button type="button" class="btn btn-confirm" id="continueBtn" style="display: none;">繼續</button>
+        </div>
+
+        <!-- 載入中提示 -->
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <span>檢查中，請稍候...</span>
+        </div>
+    </div>
+
+    <!-- 刪除確認對話框 -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>確認刪除</h3>
+            </div>
+            <div class="modal-body">
+                <p>確定要刪除今日已上傳的資料嗎？此操作無法復原。</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-back" id="cancelDelete">取消</button>
+                <button class="btn btn-danger" id="confirmDelete">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 程式碼 -->
+    <script>
+        $(document).ready(function () {
+            // 初始化頁面
+            initializePage();
+
+            // 綁定按鈕事件
+            $('#backBtn').click(function () {
+                window.location.href = 'step2.2.html';
+            });
+
+            $('#continueBtn').click(function () {
+                proceedToNextStep();
+            });
+
+            $('#deleteBtn').click(function () {
+                showDeleteConfirmation();
+            });
+
+            $('#cancelDelete').click(function () {
+                hideDeleteConfirmation();
+            });
+
+            $('#confirmDelete').click(function () {
+                deleteTodayData();
+            });
+        });
+
+        /**
+         * 初始化頁面資料
+         * 檢查今日是否已有上傳記錄
+         */
+        function initializePage() {
+            try {
+                // 顯示載入中提示
+                $('#loadingIndicator').show();
+                $('#contentArea').hide();
+
+                // 確認是否有有效的交易資料
+                const validationResult = JSON.parse(localStorage.getItem('validationResult'));
+                if (!validationResult || !validationResult.validRecords) {
+                    throw new Error('找不到必要的驗證資料');
+                }
+
+                // 呼叫API檢查今日是否有上傳紀錄
+                checkTodayUploads();
+            } catch (error) {
+                console.error('初始化頁面錯誤:', error);
+                showError('初始化頁面失敗：' + error.message);
+            }
+        }
+
+        /**
+         * 檢查今日上傳記錄
+         */
+         function checkTodayUploads() {  
+$.ajax({  
+// 更新為正確的API路徑  
+url: '/ExchangeHub/api3/exchange/check/upload-status',  
+method: 'GET',  
+success: function (response) {  
+handleStatusResponse(response);  
+},  
+error: function (xhr, status, error) {  
+console.error('API請求失敗:', error);  
+showError('檢查今日上傳狀態失敗: ' + (xhr.responseJSON?.message || error));  
+},  
+complete: function () {  
+$('#loadingIndicator').hide();  
+}  
+});  
+}  
+
+        /**
+         * 處理狀態回應
+         */
+        function handleStatusResponse(response) {
+            // 檢查資料有效性
+            if (!response) {
+                showError('收到無效的回應資料');
+                return;
+            }
+
+            console.log('API回應:', response);
+
+            // 根據回應顯示不同內容
+            if (response.hasUploaded) {
+                showExistingUploadInfo(response);
+            } else {
+                showNoUploadInfo();
+            }
+
+            // 顯示內容區域
+            $('#contentArea').show();
+        }
+
+        /**
+         * 顯示已有上傳資料的訊息
+         */
+        function showExistingUploadInfo(data) {
+            const contentHtml = `
+                <div class="warning-box">
+                    <h3>注意：今日已有上傳記錄</h3>
+                    <div class="info-row">
+                        <span class="info-label">上次上傳時間：</span>
+                        <span>${data.lastUploadTime || '未知'}</span>
+                    </div>
+                    ${data.recordCount ? 
+                        `<div class="info-row">
+                            <span class="info-label">資料筆數：</span>
+                            <span>${data.recordCount} 筆</span>
+                        </div>` : ''}
+                  
+                </div>
+
+                <div class="notice">
+                    <strong>警告：</strong>
+                    <ul>
+                  
+                        <li>建議在繼續前先刪除當前資料</li>
+                        <li>此操作無法復原，請確認是否繼續</li>
+                    </ul>
+                </div>
+            `;
+
+            // 更新內容區域
+            $('#contentArea').html(contentHtml);
+
+            // 更新按鈕
+            $('#buttonGroup').html(`
+                <button type="button" class="btn btn-back" id="backBtn">返回</button>
+                <button type="button" class="btn btn-danger" id="deleteBtn">刪除今日資料</button>
+                <button type="button" class="btn btn-confirm" id="continueBtn">繼續操作並保留當日上傳資料</button>
+            `);
+
+            // 重新綁定按鈕事件
+            $('#backBtn').click(function () {
+                window.location.href = 'step2.2.html';
+            });
+
+            $('#deleteBtn').click(function () {
+                showDeleteConfirmation();
+            });
+
+            $('#continueBtn').click(function () {
+                proceedToNextStep();
+            });
+        }
+
+        /**
+         * 顯示無上傳資料的訊息
+         */
+        function showNoUploadInfo() {
+            const contentHtml = `
+                <div class="success-box">
+                    <h3>可以安全上傳資料</h3>
+                    <p>系統檢查顯示今日尚未有資料上傳，您可以安全地繼續操作。</p>
+                </div>
+
+                <div class="notice">
+                    <strong>操作提示：</strong>
+                    <ul>
+                        <li>點擊「繼續」將進行重複交易檢查</li>
+                        <li>若有重複交易，系統將在下一步驟中顯示</li>
+                    </ul>
+                </div>
+            `;
+
+            // 更新內容區域
+            $('#contentArea').html(contentHtml);
+
+            // 更新按鈕
+            $('#buttonGroup').html(`
+                <button type="button" class="btn btn-back" id="backBtn">返回</button>
+                <button type="button" class="btn btn-confirm" id="continueBtn">繼續</button>
+            `);
+
+            // 重新綁定按鈕事件
+            $('#backBtn').click(function () {
+                window.location.href = 'step2.2.html';
+            });
+
+            $('#continueBtn').click(function () {
+                proceedToNextStep();
+            });
+        }
+
+        /**
+         * 顯示刪除確認對話框
+         */
+        function showDeleteConfirmation() {
+            $('#deleteModal').fadeIn(300);
+        }
+
+        /**
+         * 隱藏刪除確認對話框
+         */
+        function hideDeleteConfirmation() {
+            $('#deleteModal').fadeOut(300);
+        }
+
+        /**
+         * 刪除今日資料
+         */
+         /**  
+         * 刪除今日資料  
+         */  
+         function deleteTodayData() {  
+         $('#loadingIndicator').show();  
+         hideDeleteConfirmation();  
+           
+         $.ajax({  
+         // 更新為正確的API路徑  
+         url: '/ExchangeHub/api3/exchange/check/delete-today',  
+         method: 'DELETE',  
+         success: function (response) {  
+         console.log('刪除成功:', response);  
+           
+         // 顯示成功訊息  
+         $('#messageArea').html(`  
+         <div class="success-box">  
+         <h3>資料已成功刪除</h3>  
+         <p>今日資料已成功刪除，可以安全地繼續操作。</p>  
+         </div>  
+         `);  
+           
+         // 更新頁面狀態  
+         showNoUploadInfo();  
+         },  
+         error: function (xhr, status, error) {  
+         console.error('刪除失敗:', error);  
+         showError('刪除資料失敗: ' + (xhr.responseJSON?.message || error));  
+         },  
+         complete: function () {  
+         $('#loadingIndicator').hide();  
+         }  
+         });  
+         }  
+
+        /**
+         * 繼續下一步
+         */
+        function proceedToNextStep() {
+            try {
+                $('#loadingIndicator').show();
+                
+                // 從localStorage獲取資料
+                const validationResult = JSON.parse(localStorage.getItem('validationResult'));
+                if (!validationResult || !validationResult.validRecords) {
+                    throw new Error('找不到必要的驗證資料');
+                }
+
+                // 編碼並發送資料到後端
+                sendDataToBackend(validationResult.validRecords);
+            } catch (error) {
+                console.error('處理繼續操作時發生錯誤:', error);
+                showError('繼續操作失敗: ' + error.message);
+                $('#loadingIndicator').hide();
+            }
+        }
+
+        /**
+         * 發送資料到後端進行處理
+         */
+        function sendDataToBackend(data) {
+            console.log('準備發送的資料:', data);
+
+            // 在發送之前進行編碼
+            const encodedData = data.map(record => ({
+                personalInfo: {
+                    ...record.personalInfo,
+                    name: encodeURIComponent(record.personalInfo.name),
+                    nationality: encodeURIComponent(record.personalInfo.nationality)
+                },
+                transactionInfo: {
+                    ...record.transactionInfo,
+                    transactionDescription: encodeURIComponent(record.transactionInfo.transactionDescription)
+                }
+            }));
+
+            $.ajax({
+                url: '/ExchangeHub/api3/check/duplicates',
+                method: 'POST',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(encodedData),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept-Charset', 'UTF-8');
+                },
+                success: function(response) {
+                    console.log('收到伺服器回應:', response);
+
+                    try {
+                        // 解碼回應資料
+                        const decodedResponse = {
+                            ...response,
+                            duplicates: response.duplicates.map(record => ({
+                                personalInfo: {
+                                    ...record.personalInfo,
+                                    name: decodeURIComponent(record.personalInfo.name),
+                                    nationality: decodeURIComponent(record.personalInfo.nationality)
+                                },
+                                transactionInfo: {
+                                    ...record.transactionInfo,
+                                    transactionDescription: decodeURIComponent(record.transactionInfo.transactionDescription)
+                                }
+                            })),
+                            nonDuplicates: response.nonDuplicates.map(record => ({
+                                personalInfo: {
+                                    ...record.personalInfo,
+                                    name: decodeURIComponent(record.personalInfo.name),
+                                    nationality: decodeURIComponent(record.personalInfo.nationality)
+                                },
+                                transactionInfo: {
+                                    ...record.transactionInfo,
+                                    transactionDescription: decodeURIComponent(record.transactionInfo.transactionDescription)
+                                }
+                            }))
+                        };
+
+                        // 儲存解碼後的結果
+                        localStorage.setItem('checkResult', JSON.stringify(decodedResponse));
+
+                        window.location.href = 'step3.html';
+                    } catch (error) {
+                        console.error('處理回應時發生錯誤:', error);
+                        showError('處理回應時發生錯誤：' + error.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('請求失敗:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+
+                    let errorMessage = '處理請求時發生錯誤';
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMessage = errorResponse.message || errorMessage;
+                    } catch (e) {
+                        errorMessage += ': ' + error;
+                    }
+
+                    showError(errorMessage);
+                },
+                complete: function () {
+                    $('#loadingIndicator').hide();
+                }
+            });
+        }
+
+        /**
+         * 顯示錯誤訊息
+         */
+        function showError(message) {
+            $('#messageArea').html(`
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; 
+                     padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+                    <h4>發生錯誤</h4>
+                    <p>${message}</p>
+                </div>
+            `);
+            $('#loadingIndicator').hide();
+        }
+    </script>
+</body>
+
+</html>

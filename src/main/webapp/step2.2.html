@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<title>結匯清單確認</title>
+<script src="resources/js/jquery-3.6.0.min.js"></script>
+
+<!-- 請求攔截器 -->
+<script src="resources/js/api-interceptor.js"></script>
+
+<!-- 其他JS -->
+<script src="resources/js/idValidator.js"></script>
+<link rel="stylesheet" href="resources/css/step2.css">
+
+<!-- 導航欄相關引入 -->
+<link rel="stylesheet" href="resources/css/navbar.css">
+<script src="resources/js/navbar-loader.js"></script>
+
+
+</head>
+
+<body>
+<!-- 導航欄相關 -->
+ <div id="navbar-container"></div>
+
+	<div class="container">
+		<div class="header">
+			<h2>步驟二：確認資料</h2>
+		</div>
+
+		<!-- 基本資訊區塊 -->
+		<div class="info-box">
+			<h3>檔案基本資訊</h3>
+			<div class="info-row">
+				<span class="info-label">檔案名稱：</span> <span id="fileName"></span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">上傳時間：</span> <span id="uploadTime"></span>
+			</div>
+			<div class="info-row">
+				<span class="info-label">資料筆數：</span> <span id="recordCount"></span>
+			</div>
+		</div>
+
+		<!-- 驗證結果摘要區塊 -->
+		<div id="validationSummary" class="validation-summary"></div>
+
+		<!-- 交易資料預覽區塊 -->
+		<div class="preview-section">
+			<h3>有效交易資料預覽</h3>
+			<div class="table-container">
+				<table class="data-table">
+					<thead>
+						<tr>
+							<th>序號</th>
+							<th>姓名</th>
+							<th>身分證字號</th>
+							<th>生日</th>
+							<th>國籍</th>
+							<th>幣別</th>
+							<th>結匯金額</th>
+							<th>交易時間</th>
+						</tr>
+					</thead>
+					<tbody id="dataPreview"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- 無效交易資料區塊 -->
+		<div id="invalidRecordsSection" class="invalid-section"
+			style="display: none;">
+			<h3>無效交易資料</h3>
+			<div class="table-container">
+				<table class="invalid-table">
+					<thead>
+						<tr>
+							<th>行號</th>
+							<th>錯誤原因</th>
+						</tr>
+					</thead>
+					<tbody id="invalidRecords"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- 注意事項區塊 -->
+		<div class="notice">
+			<strong>注意事項：</strong>
+			<ul>
+				<li>請確認以上資料是否正確</li>
+				<li>確認並檢查後，系統將與歷史清單比對</li>
+				<li>如發現資料有誤，請點擊「返回」重新上傳</li>
+			</ul>
+		</div>
+
+		<!-- 操作按鈕區塊 -->
+		<div class="button-group">
+			<button type="button" class="btn btn-back" id="backBtn">返回</button>
+			<button type="button" class="btn btn-confirm" id="confirmBtn">確認並檢查</button>
+		</div>
+
+		<!-- 載入中提示 -->
+		<div id="loadingIndicator" class="loading-indicator"
+			style="display: none;">
+			<div class="spinner"></div>
+			<span>處理中，請稍候...</span>
+		</div>
+	</div>
+
+	<!-- JavaScript 程式碼將在這裡 -->
+	<script>
+        $(document).ready(function () {
+            // 初始化頁面
+            initializePage();
+
+            // 綁定按鈕事件
+            $('#backBtn').click(function () {
+                window.location.href = 'step1.html';
+            });
+
+            $('#confirmBtn').click(function () {
+                confirmData();
+            });
+        });
+
+        /**
+         * 初始化頁面資料
+         * 從 localStorage 讀取並展示資料
+         */
+        function initializePage() {
+            try {
+                // 讀取並解析存儲的資料
+                const validationResult = JSON.parse(localStorage.getItem('validationResult'));
+                const uploadData = JSON.parse(localStorage.getItem('uploadData'));
+
+                console.log('載入的驗證結果:', validationResult);
+                console.log('載入的上傳資料:', uploadData);
+
+                // 驗證資料完整性
+                if (!validationResult || !uploadData) {
+                    throw new Error('找不到必要的驗證資料');
+                }
+
+                if (!validationResult.validRecords) {
+                    throw new Error('驗證資料格式不正確');
+                }
+
+                // 顯示各部分資料
+                displayBasicInfo(uploadData);
+                displayValidationSummary(validationResult);
+
+                if (validationResult.validRecords.length > 0) {
+                    displayTransactionData(validationResult.validRecords);
+                }
+
+                if (validationResult.invalidRecords && validationResult.invalidRecords.length > 0) {
+                    displayInvalidTransactions(validationResult.invalidRecords);
+                }
+
+            } catch (error) {
+                console.error('資料載入錯誤:', error);
+                alert('資料載入錯誤：' + error.message);
+                window.location.href = 'step1.html';
+            }
+        }
+
+        /**
+         * 顯示基本資訊
+         */
+        function displayBasicInfo(data) {
+            $('#fileName').text(data.fileName || '未知');
+            $('#uploadTime').text(data.uploadTime || new Date().toLocaleString('zh-TW'));
+            $('#recordCount').text(data.recordCount || 0);
+        }
+
+        /**
+         * 顯示驗證結果摘要
+         */
+        function displayValidationSummary(validationResult) {
+            const summary = validationResult.summary || {};
+            const summaryHtml = `
+        <div class="summary-content">
+            <h4>資料驗證結果</h4>
+            <div class="info-row">
+                <span class="info-label">總筆數：</span>
+                <span>${summary.totalLines || 0}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">有效筆數：</span>
+                <span>${summary.validLines || 0}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">無效筆數：</span>
+                <span class="warning-text">${summary.invalidLines || 0}</span>
+            </div>
+            ${summary.invalidLines > 0 ?
+                    '<p class="warning-text">※ 請查看下方無效交易明細</p>' : ''}
+        </div>
+    `;
+
+            $('#validationSummary').html(summaryHtml);
+        }
+
+        /**
+         * 顯示交易資料
+         */
+        function displayTransactionData(transactions) {
+            const tbody = $('#dataPreview');
+            tbody.empty();
+
+            console.log('準備顯示的交易資料:', transactions);
+
+            transactions.forEach((transaction, index) => {
+                if (!transaction || !transaction.personalInfo || !transaction.transactionInfo) {
+                    console.error('無效的交易資料格式:', transaction);
+                    return;
+                }
+
+                const row = $('<tr>');
+                try {
+                    const { personalInfo, transactionInfo } = transaction;
+                    row.html(`
+                <td>${index + 1}</td>
+                <td>${encodeHtml(personalInfo.name)}</td>
+                <td>${personalInfo.idNumber ? idValidator.format(encodeHtml(personalInfo.idNumber)) : ''}</td>
+                <td>${encodeHtml(personalInfo.birthDate)}</td>
+                <td>${encodeHtml(personalInfo.nationality)}</td>
+                <td>${encodeHtml(personalInfo.currency)}</td>
+                <td>${formatNumber(transactionInfo.exchangeAmount)}</td>
+                <td>${encodeHtml(transactionInfo.transactionTime)}</td>
+            `);
+                    tbody.append(row);
+                } catch (error) {
+                    console.error('處理交易資料時發生錯誤:', error, transaction);
+                }
+            });
+        }
+
+        /**
+ * 顯示無效交易資料
+ */
+        function displayInvalidTransactions(invalidRecords) {
+            if (!invalidRecords || invalidRecords.length === 0) {
+                $('#invalidRecordsSection').hide();
+                return;
+            }
+
+            const tbody = $('#invalidRecords');
+            tbody.empty();
+
+            // 為每一筆無效記錄創建帶有表格樣式的行
+            invalidRecords.forEach(record => {
+                const row = $('<tr>');
+
+                // 使用表格單元格樣式顯示行號
+                const lineNumberCell = $('<td>').addClass('invalid-cell text-center').text(`第 ${record.lineNumber + 1} 行`);
+
+                // 使用表格單元格樣式顯示錯誤信息
+                const errorCell = $('<td>').addClass('invalid-cell');
+
+                // 創建錯誤信息的列表
+                const errorList = $('<div>').addClass('error-list');
+                record.errors.forEach(error => {
+                    errorList.append(
+                        $('<div>')
+                            .addClass('error-item')
+                            .text(error)
+                    );
+                });
+
+                // 將錯誤列表添加到錯誤單元格中
+                errorCell.append(errorList);
+
+                // 將單元格添加到行中
+                row.append(lineNumberCell).append(errorCell);
+
+                // 將行添加到表格主體
+                tbody.append(row);
+            });
+
+            // 顯示無效記錄區塊
+            $('#invalidRecordsSection').show();
+        }
+
+        /**
+         * 確認資料並進行下一步
+         */
+         
+         function confirmData() {
+        	    if (!confirm('確定要進行資料檢查嗎？')) {
+        	        return;
+        	    }
+
+        	    try {
+        	        const validationResult = JSON.parse(localStorage.getItem('validationResult'));
+        	        if (!validationResult || !validationResult.validRecords) {
+        	            throw new Error('無效的資料格式');
+        	        }
+
+        	        // 跳轉到步驟2.5頁面
+        	        window.location.href = 'step2.5.html';
+        	    } catch (error) {
+        	        console.error('確認過程發生錯誤:', error);
+        	        alert('處理失敗：' + error.message);
+        	    }
+        	}
+//         function confirmData() {
+//             if (!confirm('確定要進行資料檢查嗎？')) {
+//                 return;
+//             }
+
+//             $('#loadingIndicator').show();
+//             $('#confirmBtn').prop('disabled', true);
+
+//             try {
+//                 const validationResult = JSON.parse(localStorage.getItem('validationResult'));
+//                 if (!validationResult || !validationResult.validRecords) {
+//                     throw new Error('無效的資料格式');
+//                 }
+
+//                 sendDataToBackend(validationResult.validRecords);
+//             } catch (error) {
+//                 console.error('確認過程發生錯誤:', error);
+//                 alert('處理失敗：' + error.message);
+//                 $('#loadingIndicator').hide();
+//                 $('#confirmBtn').prop('disabled', false);
+//             }
+//         }
+
+        /**
+         * 發送資料到後端進行處理
+         */
+        function sendDataToBackend(data) {
+            console.log('準備發送的資料:', data);
+
+            // 在發送之前進行編碼
+            const encodedData = data.map(record => ({
+                personalInfo: {
+                    ...record.personalInfo,
+                    name: encodeURIComponent(record.personalInfo.name),
+                    nationality: encodeURIComponent(record.personalInfo.nationality)
+                },
+                transactionInfo: {
+                    ...record.transactionInfo,
+                    transactionDescription: encodeURIComponent(record.transactionInfo.transactionDescription)
+                }
+            }));
+
+            $.ajax({
+                url: '/ExchangeHub/api3/check/duplicates',
+                method: 'POST',
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify(encodedData),
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Accept-Charset', 'UTF-8');
+                },
+                success: handleSuccess,
+                error: handleError
+            });
+        }
+
+        /**
+         * 處理成功響應
+         */
+        function handleSuccess(response) {
+            console.log('收到伺服器回應:', response);
+
+            try {
+                // 解碼回應資料
+                const decodedResponse = {
+                    ...response,
+                    duplicates: response.duplicates.map(record => ({
+                        personalInfo: {
+                            ...record.personalInfo,
+                            name: decodeURIComponent(record.personalInfo.name),
+                            nationality: decodeURIComponent(record.personalInfo.nationality)
+                        },
+                        transactionInfo: {
+                            ...record.transactionInfo,
+                            transactionDescription: decodeURIComponent(record.transactionInfo.transactionDescription)
+                        }
+                    })),
+                    nonDuplicates: response.nonDuplicates.map(record => ({
+                        personalInfo: {
+                            ...record.personalInfo,
+                            name: decodeURIComponent(record.personalInfo.name),
+                            nationality: decodeURIComponent(record.personalInfo.nationality)
+                        },
+                        transactionInfo: {
+                            ...record.transactionInfo,
+                            transactionDescription: decodeURIComponent(record.transactionInfo.transactionDescription)
+                        }
+                    }))
+                };
+
+                // 儲存解碼後的結果
+                localStorage.setItem('checkResult', JSON.stringify(decodedResponse));
+
+                window.location.href = 'step3.html';
+            } catch (error) {
+                console.error('處理回應時發生錯誤:', error);
+                alert('處理回應時發生錯誤：' + error.message);
+            }
+        }
+        /**
+         * 處理錯誤響應
+         */
+        function handleError(xhr, status, error) {
+            console.error('請求失敗:', {
+                status: status,
+                error: error,
+                response: xhr.responseText
+            });
+
+            let errorMessage = '處理請求時發生錯誤';
+            try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                errorMessage = errorResponse.message || errorMessage;
+            } catch (e) {
+                errorMessage += ': ' + error;
+            }
+
+            alert(errorMessage);
+        }
+
+        /**
+         * 解碼交易資料
+         */
+        function decodeTransactionData(transaction) {
+            const decoded = { ...transaction };
+
+            if (decoded.personalInfo) {
+                decoded.personalInfo = {
+                    ...decoded.personalInfo,
+                    name: decodeURIComponent(decoded.personalInfo.name || ''),
+                    nationality: decodeURIComponent(decoded.personalInfo.nationality || '')
+                };
+            }
+
+            if (decoded.transactionInfo && decoded.transactionInfo.transactionDescription) {
+                decoded.transactionInfo = {
+                    ...decoded.transactionInfo,
+                    transactionDescription: decodeURIComponent(
+                        decoded.transactionInfo.transactionDescription
+                    )
+                };
+            }
+
+            return decoded;
+        }
+
+        /**
+         * 格式化數字
+         */
+        function formatNumber(num) {
+            return new Intl.NumberFormat('zh-TW', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        /**
+         * HTML 編碼
+         */
+        function encodeHtml(text) {
+            if (!text) return '';
+            return $('<div/>').text(text).html();
+        }
+        
+        
+    </script>
+	
+
+</body>
+
+</html>

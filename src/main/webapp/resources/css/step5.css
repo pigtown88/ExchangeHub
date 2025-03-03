@@ -1,0 +1,96 @@
+
+.container {
+	max-width: 800px;
+	margin: 40px auto;
+	padding: 20px;
+}
+
+.result-card {
+	background: white;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	padding: 32px;
+	text-align: center;
+}
+
+.success-icon {
+	width: 72px;
+	height: 72px;
+	background: #4CAF50;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto 24px;
+	color: white;
+	font-size: 36px;
+}
+
+.success-title {
+	font-size: 24px;
+	color: #333;
+	margin-bottom: 16px;
+}
+
+.success-message {
+	color: #666;
+	font-size: 16px;
+	line-height: 1.5;
+	margin-bottom: 32px;
+}
+
+.details-box {
+	background: #f8f9fa;
+	border-radius: 6px;
+	padding: 20px;
+	text-align: left;
+	margin-bottom: 32px;
+}
+
+.details-title {
+	font-size: 18px;
+	color: #333;
+	margin-bottom: 16px;
+}
+
+.detail-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 8px 0;
+	border-bottom: 1px solid #eee;
+}
+
+.detail-label {
+	color: #666;
+}
+
+.detail-value {
+	color: #333;
+	font-weight: 500;
+}
+
+.btn {
+	padding: 12px 32px;
+	border-radius: 6px;
+	font-size: 16px;
+	cursor: pointer;
+	transition: all 0.3s;
+	border: none;
+	background: #1976D2;
+	color: white;
+}
+
+.btn:hover {
+	background: #1565C0;
+}
+
+@media (max-width: 640px) {
+	.container {
+		padding: 16px;
+		margin: 20px auto;
+	}
+
+	.result-card {
+		padding: 24px;
+	}
+}

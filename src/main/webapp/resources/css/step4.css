@@ -1,0 +1,168 @@
+.container {
+	width: 90%;
+	max-width: 800px;
+	margin: 20px auto;
+	padding: 20px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	background-color: #fff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.header h2 {
+	margin: 0;
+	color: #333;
+	font-size: 24px;
+}
+
+.info-box {
+	background-color: #f8f9fa;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 5px;
+	border: 1px solid #ddd;
+}
+
+.info-box h3 {
+	margin-top: 0;
+	margin-bottom: 15px;
+	color: #333;
+	font-size: 18px;
+}
+
+.info-row {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 10px;
+	padding: 5px 0;
+	border-bottom: 1px solid #eee;
+}
+
+.info-row:last-child {
+	border-bottom: none;
+}
+
+.info-row span {
+	font-size: 16px;
+}
+
+.info-row strong {
+	color: #0d6efd;
+}
+
+.warning-box {
+	background-color: #fff3cd;
+	border: 1px solid #ffeeba;
+	color: #856404;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 5px;
+}
+
+.warning-box.important {
+	background-color: #f8d7da;
+	border-color: #f5c6cb;
+	color: #721c24;
+}
+
+.warning-box h4 {
+	margin-top: 0;
+	margin-bottom: 10px;
+	font-size: 18px;
+}
+
+.notice-box {
+	background-color: #e2e3e5;
+	border: 1px solid #d6d8db;
+	padding: 20px;
+	margin-bottom: 20px;
+	border-radius: 5px;
+}
+
+.notice-box h4 {
+	margin-top: 0;
+	margin-bottom: 10px;
+	font-size: 18px;
+}
+
+.list-style {
+	margin-left: 20px;
+	padding-left: 0;
+	list-style-type: disc;
+}
+
+.list-style li {
+	margin-bottom: 8px;
+	line-height: 1.5;
+}
+
+.button-group {
+	text-align: right;
+	margin-top: 30px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+}
+
+.btn {
+	padding: 8px 20px;
+	margin-left: 10px;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 16px;
+	border: 1px solid transparent;
+	transition: all 0.3s ease;
+}
+
+.btn-back {
+	background-color: #fff;
+	border-color: #ddd;
+	color: #333;
+}
+
+.btn-back:hover {
+	background-color: #f8f9fa;
+}
+
+.btn-confirm {
+	background-color: #0d6efd;
+	color: white;
+	border: none;
+}
+
+.btn-confirm:hover {
+	background-color: #0b5ed7;
+}
+
+.btn-confirm:disabled {
+	background-color: #84b4ff;
+	cursor: not-allowed;
+}
+
+#loadingText {
+	display: none;
+	margin-left: 10px;
+	color: #666;
+	font-size: 14px;
+}
+
+@media (max-width : 768px) {
+	.container {
+		width: 95%;
+		padding: 15px;
+	}
+
+	.info-row {
+		flex-direction: column;
+	}
+
+	.btn {
+		padding: 6px 15px;
+		font-size: 14px;
+	}
+}
