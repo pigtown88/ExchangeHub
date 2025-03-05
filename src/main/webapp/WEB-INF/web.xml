@@ -1,0 +1,110 @@
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	version="3.1">
+
+
+	<welcome-file-list>
+		<welcome-file>step1.html</welcome-file>
+	</welcome-file-list>
+
+	<servlet>
+		<servlet-name>JerseyServlet</servlet-name>
+		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+		<!-- 指定 package 掃描路徑 -->
+		<init-param>
+			<param-name>jersey.config.server.provider.packages</param-name>
+			<param-value>com.controller,com.filter.token</param-value>
+		</init-param>
+
+		<!-- 啟用 multipart 功能 -->
+		<init-param>
+			<param-name>jersey.config.server.provider.classnames</param-name>
+			<param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
+		</init-param>
+
+		<init-param>
+			<param-name>jersey.config.server.mediaTypeMappings</param-name>
+			<param-value>json:application/json;charset=UTF-8,xml:application/xml;charset=UTF-8</param-value>
+		</init-param>
+
+		<!-- 配置檔案上傳限制 -->
+		<multipart-config>
+			<location>D:/tmp</location>
+			<max-file-size>10485760</max-file-size>  <!-- 10MB -->
+			<max-request-size>10485760</max-request-size>
+			<file-size-threshold>1048576</file-size-threshold>  <!-- 1MB -->
+		</multipart-config>
+
+
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>JerseyServlet</servlet-name>
+		<url-pattern>/api3/*</url-pattern>
+	</servlet-mapping>
+
+
+<!-- 		 安全相關設定  -->
+	<security-constraint>
+		<web-resource-collection>
+			<web-resource-name>Secured APIs</web-resource-name>
+			<url-pattern>/api3/*</url-pattern>
+		</web-resource-collection>
+	</security-constraint>
+
+
+
+	<!-- <servlet> -->
+	<!-- <servlet-name>jersey-servlet1</servlet-name> -->
+	<!-- <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> -->
+	<!-- <init-param> -->
+	<!-- <param-name>jersey.config.server.provider.packages</param-name> -->
+	<!-- <param-value>com.controller</param-value> -->
+	<!-- </init-param> -->
+	<!-- <load-on-startup>1</load-on-startup> -->
+	<!-- </servlet> -->
+	<!-- <servlet-mapping> -->
+	<!-- <servlet-name>jersey-servlet1</servlet-name> -->
+	<!-- <url-pattern>/api/*</url-pattern> -->
+	<!-- </servlet-mapping> -->
+
+	<!-- Jersey Servlet Configuration 會和CONFIG只要挑選一個就好 -->
+	<!-- <servlet> -->
+	<!-- <servlet-name>Jersey REST Service</servlet-name> -->
+	<!-- <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class> -->
+	<!-- <init-param> -->
+	<!-- <param-name>javax.ws.rs.Application</param-name> -->
+	<!-- <param-value>com.config.MyJerseyApplication</param-value> -->
+	<!-- </init-param> -->
+	<!-- <load-on-startup>1</load-on-startup> -->
+	<!-- </servlet> -->
+
+	<!-- <servlet-mapping> -->
+	<!-- <servlet-name>Jersey REST Service</servlet-name> -->
+	<!-- <url-pattern>/api/*</url-pattern> -->
+	<!-- </servlet-mapping> -->
+
+
+	<!-- <filter> -->
+	<!-- <filter-name>logFilterRequest</filter-name> -->
+	<!-- <filter-class>com.filter.LogFilterRequest</filter-class> -->
+	<!-- </filter> -->
+	<!-- <filter-mapping> -->
+	<!-- <filter-name>logFilterRequest</filter-name> -->
+	<!-- <url-pattern>/*</url-pattern> -->
+	<!-- </filter-mapping> -->
+
+	<!-- LogFilterResponse 配置 -->
+	<!-- <filter> -->
+	<!-- <filter-name>logFilterResponse</filter-name> -->
+	<!-- <filter-class>com.filter.LogFilterResponse</filter-class> -->
+	<!-- </filter> -->
+	<!-- <filter-mapping> -->
+	<!-- <filter-name>logFilterResponse</filter-name> -->
+	<!-- <url-pattern>/*</url-pattern> -->
+	<!-- </filter-mapping> -->
+</web-app>
+
+
