@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>ExchangeHub 登入</title>
+    <script src="resources/js/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .login-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .login-btn:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .success-message {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>ExchangeHub 登入</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">帳號</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="serverName">伺服器</label>
+                <select id="serverName" name="serverName" required>
+                    <option value="TestServer">測試伺服器</option>
+                    <option value="MainServer">主要伺服器</option>
+                </select>
+            </div>
+            <button type="submit" class="login-btn">登入</button>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+        </form>
+    </div>
+
+    <script>
+    /**
+     * TokenManager 類別
+     * 負責管理登入相關的 token 和使用者資訊
+     */
+    class TokenManager {
+        // 定義 sessionStorage 中使用的 key 名稱
+        static TOKEN_KEY = 'auth_token';        // 存放 token 資訊的 key
+        static USER_INFO_KEY = 'user_info';     // 存放使用者資訊的 key
+        static SERVER_NAME_KEY = 'server_name'; // 存放伺服器名稱的 key
+
+        /**
+         * 儲存 token 和相關資訊到 sessionStorage
+         * @param {string} token - JWT token
+         * @param {Date} expiryDate - token 的過期時間
+         * @param {Object} userInfo - 使用者資訊物件
+         * @param {string} serverName - 伺服器名稱
+         * @returns {boolean} 儲存是否成功
+         * @throws {Error} 當儲存過程發生錯誤時拋出
+         */
+        static setToken(token, expiryDate, userInfo, serverName) {
+            try {
+                // 儲存 token 相關資訊
+                const tokenData = {
+                    value: token,                        // JWT token 本身
+                    expiry: expiryDate.toISOString(),   // 過期時間
+                    timestamp: new Date().toISOString()  // 儲存時間
+                };
+                sessionStorage.setItem(this.TOKEN_KEY, JSON.stringify(tokenData));
+                
+                // 儲存使用者資訊 (不包含 token)
+                if (userInfo) {
+                    const sanitizedUserInfo = {
+                        username: userInfo.username,  // 使用者名稱
+                        userId: userInfo.userId      // 使用者 ID
+                    };
+                    sessionStorage.setItem(this.USER_INFO_KEY, JSON.stringify(sanitizedUserInfo));
+                }
+                
+                // 儲存伺服器名稱
+                if (serverName) {
+                    sessionStorage.setItem(this.SERVER_NAME_KEY, serverName);
+                }
+                
+                console.log('Token 和使用者資訊儲存成功');
+                return true;
+            } catch (error) {
+                console.error('儲存失敗:', error);
+                throw new Error('儲存時發生錯誤');
+            }
+        }
+
+        /**
+         * 從 sessionStorage 取得 token
+         * @returns {string|null} 如果 token 有效則返回 token，否則返回 null
+         */
+        static getToken() {
+            try {
+                const tokenData = JSON.parse(sessionStorage.getItem(this.TOKEN_KEY));
+                if (!tokenData) {
+                    return null;
+                }
+
+                // 檢查 token 是否過期
+                if (new Date(tokenData.expiry) < new Date()) {
+                    console.warn('Token 已過期');
+                    this.clearToken();
+                    return null;
+                }
+
+                return tokenData.value;
+            } catch (error) {
+                console.error('取得 Token 時發生錯誤:', error);
+                return null;
+            }
+        }
+
+        /**
+         * 取得使用者資訊
+         * @returns {Object|null} 使用者資訊物件，如果不存在則返回 null
+         */
+        static getUserInfo() {
+            try {
+                const userInfo = JSON.parse(sessionStorage.getItem(this.USER_INFO_KEY));
+                return userInfo || null;
+            } catch (error) {
+                console.error('取得使用者資訊時發生錯誤:', error);
+                return null;
+            }
+        }
+
+        /**
+         * 檢查使用者是否已登入
+         * @returns {boolean} 是否已登入
+         */
+        static isLoggedIn() {
+            return this.getToken() !== null && this.getUserInfo() !== null;
+        }
+
+        /**
+         * 清除所有登入相關資訊
+         */
+        static clearToken() {
+            sessionStorage.removeItem(this.TOKEN_KEY);
+            sessionStorage.removeItem(this.USER_INFO_KEY);
+            sessionStorage.removeItem(this.SERVER_NAME_KEY);
+        }
+
+        /**
+         * 取得伺服器名稱
+         * @returns {string|null} 伺服器名稱，如果不存在則返回 null
+         */
+        static getServerName() {
+            return sessionStorage.getItem(this.SERVER_NAME_KEY);
+        }
+    }
+
+    // 當文件載入完成後執行
+    $(document).ready(function() {
+        // 註冊登入表單提交事件
+        $('#loginForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            // 取得表單資料
+            const username = $('#username').val();
+            const password = $('#password').val();
+            const serverName = $('#serverName').val();
+            
+            // 取得訊息顯示元素
+            const $errorMessage = $('#errorMessage');
+            const $successMessage = $('#successMessage');
+            
+            // 清除之前的訊息
+            $errorMessage.text('');
+            $successMessage.text('');
+
+            // 準備登入請求資料
+            const loginRequest = {
+                username: username,
+                password: password,
+                serverName: serverName
+            };
+
+            // 發送登入請求
+            $.ajax({
+                url: '/ExchangeHub/api3/auth/login',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(loginRequest),
+                success: function(data) {
+                    try {
+                        // 解析回應資料
+                        const expiryDate = new Date(data.expiryDate);
+                        const userInfo = {
+                            username: loginRequest.username,
+                            userId: data.userId          // 如果後端有回傳的話
+                        };
+
+                        // 使用 TokenManager 儲存登入資訊
+                        TokenManager.setToken(
+                            data.token, 
+                            expiryDate, 
+                            userInfo,
+                            serverName
+                        );
+
+                        // 顯示成功訊息
+                        $successMessage.text('登入成功！即將跳轉...');
+                        
+                        // 延遲後跳轉
+                        setTimeout(function() {
+                            window.location.href = 'step1.html';
+                        }, 1500);
+                    } catch (error) {
+                        console.error('處理登入回應時發生錯誤:', error);
+                        $errorMessage.text('登入處理過程發生錯誤');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMsg = '登入失敗';
+                    
+                    // 嘗試解析錯誤訊息
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMsg = errorResponse.message || errorMsg;
+                    } catch (e) {
+                        errorMsg = error || '登入發生未知錯誤';
+                    }
+
+                    // 顯示錯誤訊息
+                    $errorMessage.text(errorMsg);
+                    console.error('登入錯誤:', error);
+                }
+            });
+        });
+
+        // 檢查是否已登入，如果已登入則導向首頁
+        if (TokenManager.isLoggedIn()) {
+            window.location.href = 'step1.html';
+        }
+    });
+    </script>
+</body>
+</html>
