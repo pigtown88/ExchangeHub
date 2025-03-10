@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+	<!-- Configuration 代表說是log4j2的根元素 -->
+	<!-- Appenders和Loggers是兩個主要的子元素 -->
+	<Appenders>
+		<!-- 這是邊是console印出來的，也就是印到LOG的同時，順便把它紀錄到console裡面 -->
+		<Console name="ConsoleAppender" target="SYSTEM_OUT">
+			<!-- 簡單定義了輸出的格式 -->
+			<!--%d 代表[日期時間] %-5p 代表日誌級別 [%t]線程名稱 %C{1}類名 %M方法名 %L是在CODE裡面的第幾行 -->
+			<!-- %X{uniqueID}我自己賦予的UUID %m 日誌消息 %n 換行 %ex{full}完整的異常訊息 -->
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %C{1}.%M:%L - %m%n%ex{full}" />
+		</Console>
+		<!-- .log檔案紀錄的命名規則、檔案過大歸檔規則 -->
+		<!-- fileName 當前的日誌名稱 filePattern 滾動歸檔後的日誌名稱 -->
+		<RollingFile name="RollingFileAppender"
+			fileName="C:\\logs\\apipro.log"
+			filePattern="C:\\logs\\%d{yyyy-MM-dd}-apipro-%i.log">
+			<!-- 紀錄到.log 裡面的時間、ID、全文 -->
+			<!-- PatternLayout是用來定義輸出的格式 -->
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %C{1}.%M:%L- %X{uniqueID} - %m%n%ex{full}" />
+			<!-- 定義與控制台附加器相同的日誌輸出格式 -->
+
+			<Policies> <!-- 定義文件滾動[策略] -->
+				<TimeBasedTriggeringPolicy interval="1"
+					modulate="true" /> <!-- 基於時間的滾動策略，每天滾動一次 -->
+				<SizeBasedTriggeringPolicy size="10MB" /> <!-- 基於大小的滾動策略，文件達到 10MB 時滾動 -->
+			</Policies>
+
+
+		</RollingFile>
+	</Appenders>
+	<Loggers>
+<!-- 	定義最基礎的日誌級別為debug，所以以上的都會被記錄(info warn error fatal都會被紀錄) -->
+		<Root level="DEBUG">
+<!-- 		引用輸出的兩個appender(console+文件輸出) -->
+			<AppenderRef ref="ConsoleAppender" />
+			<AppenderRef ref="RollingFileAppender" />
+
+		</Root>
+	</Loggers>
+
+
+</Configuration>

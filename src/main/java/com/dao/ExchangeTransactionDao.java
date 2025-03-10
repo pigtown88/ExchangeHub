@@ -20,11 +20,11 @@ import com.model.transactionInfo.TransactionInfo;
 //ExchangeTransactionDao.java
 public class ExchangeTransactionDao {
 
-	private static final String DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
-	private static final String URL = "jdbc:sqlserver://172.16.46.181:1433;databaseName=ExchangeHub;"
-			+ "encrypt=true;trustServerCertificate=true;characterEncoding=UTF-8;";
-	private static final String USER = "sa";
-	private static final String PASSWORD = "Passw0rd";
+    private static final String DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=ExchangeHub;" +
+    "encrypt=true;trustServerCertificate=true;characterEncoding=UTF-8;";
+    private static final String USER = "sa";
+    private static final String PASSWORD = "new123";
 
 	private static final Logger log = LogManager.getLogger(ExchangeTransactionDao.class);
 
